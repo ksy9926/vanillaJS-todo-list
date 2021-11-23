@@ -1,20 +1,18 @@
 import Component from "../core/Component.js";
 import { getFormatDate } from "../utils/Date.js";
+import { debounce } from "../utils/Debounce.js";
 
 export default class Todos extends Component {
   setup() {
     const storage = JSON.parse(localStorage.getItem("state"));
-    const todoStorage = storage.todos;
-    const completeFlagStorage = storage.completeFlag;
-    const onProgressFlagStorage = storage.onProgressFlag;
+    const todoStorage = storage === null ? [] : storage.todos;
+    const completeFlagStorage = storage === null ? true : storage.completeFlag;
+    const onProgressFlagStorage =
+      storage === null ? true : storage.onProgressFlag;
 
-    const todos = todoStorage === null ? [] : todoStorage;
-    const completeFlag =
-      completeFlagStorage === null ? true : completeFlagStorage;
-    const onProgressFlag =
-      onProgressFlagStorage === null ? true : onProgressFlagStorage;
-
-    console.log("storage", storage);
+    const todos = todoStorage;
+    const completeFlag = completeFlagStorage;
+    const onProgressFlag = onProgressFlagStorage;
 
     this.$state = {
       todos: todos,
@@ -23,29 +21,31 @@ export default class Todos extends Component {
       allSelect: false,
       completeFlag: completeFlag,
       onProgressFlag: onProgressFlag,
-      search: "",
     };
   }
 
   setEvent() {
     // 추가 버튼 클릭 이벤트
     this.addEvent("click", ".plus-button", () => {
-      this.setState({
-        ...this.$state,
-        todos: [
-          ...this.$state.todos,
-          {
-            todo: "",
-            offIcon: true,
-            onProgress: false,
-            onEdit: true,
-            date: "",
-            checked: false,
-          },
-        ],
-        addFlag: true,
-        deleteFlag: false,
-      });
+      this.setState(
+        {
+          ...this.$state,
+          todos: [
+            ...this.$state.todos,
+            {
+              todo: "",
+              offIcon: true,
+              onProgress: false,
+              onEdit: true,
+              date: "",
+              checked: false,
+            },
+          ],
+          addFlag: true,
+          deleteFlag: false,
+        },
+        "N"
+      );
     });
 
     // 확인 버튼 클릭 이벤트
@@ -61,19 +61,12 @@ export default class Todos extends Component {
           date: getFormatDate(new Date()),
         };
 
-        localStorage.setItem("todos", JSON.stringify(todos));
-
         this.setState({
           ...this.$state,
           addFlag: false,
           todos: todos,
         });
       } else if (this.$state.deleteFlag) {
-        localStorage.setItem(
-          "todos",
-          JSON.stringify(todos.filter((item) => !item.checked))
-        );
-
         this.setState({
           ...this.$state,
           deleteFlag: false,
@@ -122,28 +115,11 @@ export default class Todos extends Component {
 
       todos[idx].onProgress = !todos[idx].onProgress;
 
-      localStorage.setItem("todos", JSON.stringify(todos));
-
       this.setState({
         ...this.$state,
         todos: todos,
       });
     });
-
-    // // 되돌리기 아이콘 클릭 이벤트
-    // this.addEvent("click", ".undo-alt", (e) => {
-    //   const idx = e.target.id;
-    //   const todos = [...this.$state.todos];
-
-    //   todos[idx].onProgress = true;
-
-    //   localStorage.setItem("todos", JSON.stringify(todos));
-
-    //   this.setState({
-    //     ...this.$state,
-    //     todos: todos,
-    //   });
-    // });
 
     // 편집 아이콘 클릭 이벤트
     this.addEvent("click", ".fa-edit", (e) => {
@@ -152,8 +128,6 @@ export default class Todos extends Component {
 
       todos[idx].onEdit = !todos[idx].onEdit;
       todos[idx].onProgress = !todos[idx].onProgress;
-
-      localStorage.setItem("todos", JSON.stringify(todos));
 
       this.setState({
         ...this.$state,
@@ -168,8 +142,6 @@ export default class Todos extends Component {
 
       todos[idx].todo = e.target.value;
 
-      localStorage.setItem("todos", JSON.stringify(todos));
-
       this.setState({
         ...this.$state,
         todos: todos,
@@ -183,10 +155,13 @@ export default class Todos extends Component {
 
       todos[idx].checked = e.target.checked;
 
-      this.setState({
-        ...this.$state,
-        todos: todos,
-      });
+      this.setState(
+        {
+          ...this.$state,
+          todos: todos,
+        },
+        "N"
+      );
     });
 
     // todo 전체선택 체크박스 클릭 이벤트
@@ -206,11 +181,6 @@ export default class Todos extends Component {
 
     // 완료 필터 버튼 클릭 이벤트
     this.addEvent("click", ".complete", () => {
-      localStorage.setItem(
-        "completeFlag",
-        JSON.stringify(!this.$state.completeFlag)
-      );
-
       this.setState({
         ...this.$state,
         completeFlag: !this.$state.completeFlag,
@@ -219,11 +189,6 @@ export default class Todos extends Component {
 
     // 진행중 필터 버튼 클릭 이벤트
     this.addEvent("click", ".on-progress", () => {
-      localStorage.setItem(
-        "onProgressFlag",
-        JSON.stringify(!this.$state.onProgressFlag)
-      );
-
       this.setState({
         ...this.$state,
         onProgressFlag: !this.$state.onProgressFlag,
@@ -231,18 +196,24 @@ export default class Todos extends Component {
     });
 
     // 검색 필터 이벤트
-    this.addEvent("change", ".search", (e) => {
-      const len = e.target.value.length;
+    this.addEvent("input", ".search", (e) => {
+      const callback = () => {
+        const todos = [...document.getElementsByTagName("li")];
+        todos.forEach((item, id) => {
+          if (id === 0) return;
+          if (
+            !item.childNodes[3].value
+              .toLowerCase()
+              .includes(e.target.value.toLowerCase())
+          ) {
+            item.className = "hidden";
+          } else {
+            item.className = "todos__li";
+          }
+        });
+      };
 
-      console.log(e.target.value, len);
-
-      // this.setState({
-      //   ...this.$state,
-      //   search: e.target.value,
-      // });
-
-      document.querySelector(".search").focus();
-      document.querySelector(".search").setSelectionRange(len, len);
+      debounce(callback, 300);
     });
   }
 
@@ -254,18 +225,15 @@ export default class Todos extends Component {
       allSelect,
       completeFlag,
       onProgressFlag,
-      search,
     } = this.$state;
     const todoLength = todos.filter((item) => item.onProgress).length;
 
-    const todoFilter = [...todos]
-      .filter((item) => item.todo.includes(search))
-      .filter((item) => {
-        return (
-          (completeFlag && !item.onProgress) ||
-          (onProgressFlag && item.onProgress)
-        );
-      });
+    const todoFilter = [...todos].filter((item) => {
+      return (
+        (completeFlag && !item.onProgress) ||
+        (onProgressFlag && item.onProgress)
+      );
+    });
 
     const todoList = todoFilter
       .map((item, idx) => {
@@ -284,7 +252,7 @@ export default class Todos extends Component {
             : item.onProgress
             ? "input-progress"
             : "input-complete"
-        }"  >
+        }">
             <div class="todos__date">${item.date}</div>
             <i id=${idx} class="check fas ${
           item.onProgress ? "fa-check" : "fa-undo-alt"
@@ -299,7 +267,7 @@ export default class Todos extends Component {
 
     return `
       <div class="search-wrap">
-        <input value="${search}" type="text" class="search">
+        <input type="text" class="search">
         <button class="complete" style="background: ${
           completeFlag ? "#fcff65" : "#d8d8d8"
         }">완료</button>

@@ -21,8 +21,12 @@ export default class Component {
     this.mounted(); // render 후에 mounted가 실행 된다.
   }
   setEvent() {}
-  setState(newState) {
+  setState(newState, flag) {
     this.$state = { ...this.state, ...newState };
+    if (flag === "N") {
+      this.render();
+      return;
+    }
     localStorage.setItem("state", JSON.stringify(this.$state));
     this.render();
   }
