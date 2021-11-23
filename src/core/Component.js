@@ -17,7 +17,13 @@ export default class Component {
     return "";
   }
   render() {
-    this.$target.innerHTML = this.template();
+    const child = this.template();
+
+    if (this.$target.childNodes.length) {
+      this.$target.childNodes[0].remove();
+    }
+
+    this.$target.appendChild(child);
     this.mounted(); // render 후에 mounted가 실행 된다.
   }
   setEvent() {}

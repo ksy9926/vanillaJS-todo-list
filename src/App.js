@@ -4,6 +4,7 @@ import Todos from "./components/Todos.js";
 
 import { getFormatDate } from "./utils/Date.js";
 import { debounce } from "./utils/Debounce.js";
+import { makeElement } from "./utils/Element.js";
 
 import { PROJECT_TITLE } from "./constants/Constants.js";
 
@@ -198,9 +199,7 @@ export default class App extends Component {
   // todo 전체선택 체크박스 클릭 이벤트
   allDeleteCheckboxHandler(e) {
     const todos = [...this.$state.todos];
-    todos.forEach(
-      (item) => (item.checked = this.$state.allSelect ? false : true)
-    );
+    todos.forEach((item) => (item.checked = this.$state.allSelect ? false : true));
     this.setState({
       ...this.$state,
       todos: todos,
@@ -230,11 +229,7 @@ export default class App extends Component {
       const todos = [...document.getElementsByTagName("li")];
       todos.forEach((item, id) => {
         if (id === 0) return;
-        if (
-          item.childNodes[3].value
-            .toLowerCase()
-            .includes(e.target.value.toLowerCase())
-        ) {
+        if (item.childNodes[1].value.toLowerCase().includes(e.target.value.toLowerCase())) {
           item.className = "todos__li";
         } else {
           item.className = "hidden";
@@ -246,12 +241,15 @@ export default class App extends Component {
   }
 
   template() {
-    return `
-      <main>
-        <h1>${PROJECT_TITLE}</h1>
-        <div id="search"></div>
-        <div id="todos"></div>
-      </main>
-    `;
+    const main = makeElement("main");
+    const h1 = makeElement("h1", "", "", PROJECT_TITLE);
+    const search = makeElement("div", "", "search");
+    const todos = makeElement("div", "", "todos");
+
+    main.appendChild(h1);
+    main.appendChild(search);
+    main.appendChild(todos);
+
+    return main;
   }
 }
