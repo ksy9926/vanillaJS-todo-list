@@ -10,23 +10,19 @@ import { PROJECT_TITLE } from "./constants/Constants.js";
 export default class App extends Component {
   setup() {
     const storage = JSON.parse(localStorage.getItem("state"));
-    const todoStorage = storage === null ? [] : storage.todos;
-    const completeFlagStorage = storage === null ? true : storage.completeFlag;
-    const onProgressFlagStorage =
-      storage === null ? true : storage.onProgressFlag;
 
-    const todos = todoStorage;
-    const completeFlag = completeFlagStorage;
-    const onProgressFlag = onProgressFlagStorage;
-
-    this.$state = {
-      todos: todos,
-      addFlag: false,
-      deleteFlag: false,
-      allSelect: false,
-      completeFlag: completeFlag,
-      onProgressFlag: onProgressFlag,
-    };
+    if (storage !== null) {
+      this.$state = storage;
+    } else {
+      this.$state = {
+        todos: [],
+        addFlag: false,
+        deleteFlag: false,
+        allSelect: false,
+        completeFlag: true,
+        onProgressFlag: tru,
+      };
+    }
   }
 
   // mounted에서 자식 컴포넌트를 마운트 해줘야 한다.
@@ -235,13 +231,13 @@ export default class App extends Component {
       todos.forEach((item, id) => {
         if (id === 0) return;
         if (
-          !item.childNodes[3].value
+          item.childNodes[3].value
             .toLowerCase()
             .includes(e.target.value.toLowerCase())
         ) {
-          item.className = "hidden";
-        } else {
           item.className = "todos__li";
+        } else {
+          item.className = "hidden";
         }
       });
     };
