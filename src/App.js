@@ -3,7 +3,6 @@ import Search from "./components/Search.js";
 import Todos from "./components/Todos.js";
 
 import { getFormatDate } from "./utils/Date.js";
-import { debounce } from "./utils/Debounce.js";
 import { makeElement } from "./utils/Element.js";
 
 import { PROJECT_TITLE } from "./constants/Constants.js";
@@ -13,7 +12,7 @@ export default class App extends Component {
     const storage = JSON.parse(localStorage.getItem("state"));
 
     if (storage !== null) {
-      this.$state = storage;
+      this.$state = { ...storage, search: "" };
     } else {
       this.$state = {
         todos: [],
@@ -21,14 +20,32 @@ export default class App extends Component {
         deleteFlag: false,
         allSelect: false,
         completeFlag: true,
-        onProgressFlag: tru,
+        onProgressFlag: true,
+        search: "",
       };
     }
   }
 
+  todoMounted() {
+    const $todos = this.$target.querySelector("#todos");
+    const { state } = this;
+
+    new Todos($todos, {
+      plusButtonHandler: this.plusButtonHandler.bind(this),
+      okButtonHandler: this.okButtonHandler.bind(this),
+      deleteButtonHandler: this.deleteButtonHandler.bind(this),
+      cancelButtonHandler: this.cancelButtonHandler.bind(this),
+      checkIconHandler: this.checkIconHandler.bind(this),
+      editIconHandler: this.editIconHandler.bind(this),
+      inputChangeHandler: this.inputChangeHandler.bind(this),
+      deleteCheckboxHandler: this.deleteCheckboxHandler.bind(this),
+      allDeleteCheckboxHandler: this.allDeleteCheckboxHandler.bind(this),
+      state,
+    });
+  }
+
   // mounted에서 자식 컴포넌트를 마운트 해줘야 한다.
   mounted() {
-    // const $search = this.$target.querySelector("#search");
     const $todos = this.$target.querySelector("#todos");
     const $search = this.$target.querySelector("#search");
     const { state } = this;
@@ -79,9 +96,12 @@ export default class App extends Component {
         ],
         addFlag: true,
         deleteFlag: false,
+        search: "",
       },
       "N"
     );
+
+    this.todoRender();
   }
 
   // 확인 버튼 클릭 이벤트
@@ -109,15 +129,15 @@ export default class App extends Component {
         todos: todos.filter((item) => !item.checked),
       });
     }
+
+    this.todoRender();
   }
 
   // 삭제 버튼 클릭 이벤트
   deleteButtonHandler() {
-    this.setState({
-      ...this.$state,
-      addFlag: false,
-      deleteFlag: true,
-    });
+    this.setState({ ...this.$state, addFlag: false, deleteFlag: true }, "N");
+
+    this.todoRender();
   }
 
   // 취소 버튼 클릭 이벤트
@@ -142,6 +162,8 @@ export default class App extends Component {
         allSelect: false,
       });
     }
+
+    this.todoRender();
   }
 
   // 체크 아이콘 클릭 이벤트
@@ -155,6 +177,8 @@ export default class App extends Component {
       ...this.$state,
       todos: todos,
     });
+
+    this.todoRender();
   }
 
   // 편집 아이콘 클릭 이벤트
@@ -169,6 +193,8 @@ export default class App extends Component {
       ...this.$state,
       todos: todos,
     });
+
+    this.todoRender();
   }
 
   // todo 인풋 입력시
@@ -176,10 +202,13 @@ export default class App extends Component {
     const idx = e.target.id;
     const todos = [...this.$state.todos];
     todos[idx].todo = e.target.value;
+
     this.setState({
       ...this.$state,
       todos: todos,
     });
+
+    this.render();
   }
 
   // todo 체크박스 클릭 이벤트
@@ -194,17 +223,24 @@ export default class App extends Component {
       },
       "N"
     );
+
+    this.todoRender();
   }
 
   // todo 전체선택 체크박스 클릭 이벤트
   allDeleteCheckboxHandler(e) {
     const todos = [...this.$state.todos];
     todos.forEach((item) => (item.checked = this.$state.allSelect ? false : true));
-    this.setState({
-      ...this.$state,
-      todos: todos,
-      allSelect: !this.$state.allSelect,
-    });
+    this.setState(
+      {
+        ...this.$state,
+        todos: todos,
+        allSelect: !this.$state.allSelect,
+      },
+      "N"
+    );
+
+    this.todoRender();
   }
 
   // 완료 필터 버튼 클릭 이벤트
@@ -213,6 +249,8 @@ export default class App extends Component {
       ...this.$state,
       completeFlag: !this.$state.completeFlag,
     });
+
+    this.render();
   }
 
   // 진행중 필터 버튼 클릭 이벤트
@@ -221,23 +259,18 @@ export default class App extends Component {
       ...this.$state,
       onProgressFlag: !this.$state.onProgressFlag,
     });
+
+    this.render();
   }
 
   // 검색 필터 이벤트
   searchHandler(e) {
-    const callback = () => {
-      const todos = [...document.getElementsByTagName("li")];
-      todos.forEach((item, id) => {
-        if (id === 0) return;
-        if (item.childNodes[1].value.toLowerCase().includes(e.target.value.toLowerCase())) {
-          item.className = "todos__li";
-        } else {
-          item.className = "hidden";
-        }
-      });
-    };
+    this.setState({
+      ...this.$state,
+      search: e.target.value,
+    });
 
-    debounce(callback, 300);
+    this.todoRender();
   }
 
   template() {

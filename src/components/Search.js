@@ -1,4 +1,5 @@
 import Component from "../core/Component.js";
+import { debounce } from "../utils/Debounce.js";
 import { makeElement } from "../utils/Element.js";
 
 export default class Search extends Component {
@@ -12,10 +13,13 @@ export default class Search extends Component {
     this.addEvent("click", ".on-progress", onProgressButtonHandler);
 
     // 검색 필터 이벤트
-    this.addEvent("input", ".search", (e) => searchHandler(e));
+    this.addEvent("input", ".search", (e) => {
+      debounce(() => searchHandler(e), 300);
+    });
   }
 
   template() {
+    console.log("Search 렌더링");
     const { state } = this.$props;
     const { completeFlag, onProgressFlag } = state;
 

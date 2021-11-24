@@ -27,14 +27,20 @@ export default class Todos extends Component {
   }
 
   template() {
+    console.log("To do list 렌더링");
+
     const { state } = this.$props;
-    const { todos, addFlag, deleteFlag, allSelect, completeFlag, onProgressFlag } = state;
+    const { todos, addFlag, deleteFlag, allSelect, completeFlag, onProgressFlag, search } = state;
 
     const todoLength = todos.filter((item) => item.onProgress).length;
 
-    const todoFilter = [...todos].filter((item) => {
-      return (completeFlag && !item.onProgress) || (onProgressFlag && item.onProgress);
-    });
+    const todoFilter = [...todos]
+      .filter((item) => {
+        return item.todo.toLowerCase().includes(search.toLowerCase());
+      })
+      .filter((item) => {
+        return (completeFlag && !item.onProgress) || (onProgressFlag && item.onProgress);
+      });
 
     const todoList = makeElement("div");
 
