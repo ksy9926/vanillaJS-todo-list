@@ -18,8 +18,6 @@ export default class Component {
   template() {}
 
   todoRender() {
-    const child = this.template();
-
     const target = document.querySelector("main");
     const div = makeElement("div", "", "todos");
 
@@ -27,9 +25,7 @@ export default class Component {
       target.childNodes[2].remove();
     }
 
-    div.appendChild(child);
     target.appendChild(div);
-
     this.todoMounted();
   }
 
